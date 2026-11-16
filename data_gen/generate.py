@@ -7,7 +7,7 @@ from sqlalchemy import delete, select, func
 
 from app.db import SessionLocal
 from app.models import BankTransaction, Customer, Expense, Invoice, Payment, PlantedLeak
-
+from app.models import (Alert, BankTransaction, Customer, Expense, Invoice, Payment, PaymentAllocation, PlantedLeak)
 SEED = 42
 AS_OF = date(2026, 10, 31)       # the "today" of the fake company's books
 N_CUSTOMERS = 20
@@ -31,7 +31,7 @@ def money(x) -> Decimal:
 
 def wipe(s):
     # Children before parents, because of foreign keys.
-    for model in (PlantedLeak, BankTransaction, Payment, Expense, Invoice, Customer):
+    for model in (Alert, PaymentAllocation, PlantedLeak, BankTransaction, Payment, Expense, Invoice, Customer):
         s.execute(delete(model))
 
 
