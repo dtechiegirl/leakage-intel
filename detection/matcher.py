@@ -37,6 +37,22 @@ def name_similarity(p, customer_name):
         return 0
     return fuzz.WRatio(name, customer_name.upper())
 
+def amount_fits(p, inv):
+    """Is the payment amount plausible for this invoice?"""
+    return REF_FLOOR <= p.amount / inv.amount <= OVERPAY_CEIL
+
+
+def exact_match_elsewhere(p, inv, invoices, by_customer, allocated):
+    """The reference points at `inv`, but if the amount isn't exact for it
+    and IS exact for another unpaid invoice, the reference is probably a typo."""
+    if abs(p.amount - inv.amount) <= EXACT_TOLERANCE:
+        return False
+    pool = by_customer.get(p.customer_id, []) if p.customer_id is not None else invoices
+    for other in pool:
+        if (other.id != inv.id and other.id not in allocated
+                and abs(p.amount - other.amount) <= EXACT_TOLERANCE):
+            return True
+    return False
 
 def find_by_amount(p, candidates, allocated):
     """Pass 2, customer KNOWN: use that customer's invoices + amount + dates."""
@@ -62,7 +78,10 @@ def find_by_amount(p, candidates, allocated):
         if p.paid_date < inv.issue_date:
             continue
         # Lower score = better. Amount gap counts more than timing.
-        score = float(abs(1 - ratio)) + abs(days_from_due) / 365
+        # after that, amount gap and timing decide.
+        is_exact = abs(p.amount - inv.amount) <= EXACT_TOLERANCE
+        score = (0 if is_exact else 1,
+                 float(abs(1 - ratio)) + abs(days_from_due) / 365)
         if best_score is None or score < best_score:
             best, best_score = inv, score
     if best is not None:
@@ -146,14 +165,18 @@ def run_matching():
         unmatched = 0
 
         # Pass 1: the reference names an invoice, and the customer agrees.
+                # Pass 1: the reference names an invoice, the amount fits, and
+        # no other invoice matches the amount better.
         for p in payments:
             n = invoice_number(p.reference)
             inv = by_number.get(n) if n is not None else None
-            if inv is not None and inv.customer_id == p.customer_id:
+            trusted = (inv is not None
+                       and amount_fits(p, inv)
+                       and not exact_match_elsewhere(p, inv, invoices, by_customer, allocated))
+            if trusted and inv.customer_id == p.customer_id:
                 allocated.setdefault(inv.id, []).append(p)
                 results.append((p, inv, "reference", Decimal("0.95")))
-            elif (inv is not None and p.customer_id is None
-                  and REF_FLOOR <= p.amount / inv.amount <= OVERPAY_CEIL):
+            elif trusted and p.customer_id is None:
                 allocated.setdefault(inv.id, []).append(p)
                 results.append((p, inv, "reference_no_customer", Decimal("0.85")))
             else:

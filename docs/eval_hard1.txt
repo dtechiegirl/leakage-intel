@@ -1,0 +1,7 @@
+leak type            planted flagged  caught precision  recall
+duplicate_payment          8       8       8      1.00    1.00
+partial_payment            8       8       6      0.75    0.75
+   missed: [3594, 3672]
+   false alarms: [3823, 3899]
+unpaid_invoice            10      14      10      0.71    1.00
+   false alarms: [3594, 3672, 3708, 3813]

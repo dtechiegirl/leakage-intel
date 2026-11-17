@@ -1,0 +1,27 @@
+method                          matched  correct  accuracy
+amount_date                          96       93    96.88%
+duplicate_of_existing                 3        3   100.00%
+fuzzy_amount_date                     2        2   100.00%
+fuzzy_exact_amount                   43       43   100.00%
+reference                           273      268    98.17%
+reference_no_customer                77       76    98.70%
+
+total payments:       498
+matched:              494
+left unmatched:       4
+matched correctly:    485
+accuracy when matched: 98.18%
+overall correct:       97.39%
+
+WRONG MATCHES (payment_id, matcher said invoice, truth was invoice, method):
+   (3154, 3168, 3167, 'reference')
+   (3158, 3172, 3171, 'reference')
+   (3177, 3191, 3190, 'reference')
+   (3195, 3323, 3208, 'amount_date')
+   (3218, 3231, 3230, 'reference_no_customer')
+   (3272, 3285, 3284, 'reference')
+   (3299, 3399, 3313, 'amount_date')
+   (3438, 3454, 3453, 'reference')
+   (3439, 3453, 3454, 'amount_date')
+
+UNMATCHED payment ids: [3080, 3159, 3309, 3383]

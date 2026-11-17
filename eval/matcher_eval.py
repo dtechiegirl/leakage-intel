@@ -6,6 +6,7 @@ payment_allocations table (written by the matcher).
 Run from the project root:  python -m eval.matcher_eval
 """
 import csv
+import sys
 from collections import defaultdict
 
 from sqlalchemy import select
@@ -13,7 +14,7 @@ from sqlalchemy import select
 from app.db import SessionLocal
 from app.models import PaymentAllocation
 
-TRUTH_FILE = "data_truth.csv"
+TRUTH_FILE = sys.argv[1] if len(sys.argv) > 1 else "data_truth.csv"
 
 
 def load_truth():
