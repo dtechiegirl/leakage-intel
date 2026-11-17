@@ -1,3 +1,4 @@
+import csv
 import random
 from collections import Counter
 from datetime import date, timedelta
@@ -6,8 +7,9 @@ from decimal import Decimal
 from sqlalchemy import delete, select, func
 
 from app.db import SessionLocal
-from app.models import BankTransaction, Customer, Expense, Invoice, Payment, PlantedLeak
-from app.models import (Alert, BankTransaction, Customer, Expense, Invoice, Payment, PaymentAllocation, PlantedLeak)
+from app.models import (Alert, BankTransaction, Customer, Expense, Invoice,
+                        Payment, PaymentAllocation, PlantedLeak)
+
 SEED = 42
 AS_OF = date(2026, 10, 31)       # the "today" of the fake company's books
 N_CUSTOMERS = 20
@@ -122,6 +124,7 @@ def main():
         duplicate_ids = {i.id for i in duplicate}
 
         payments, pending = [], []                  # pending = leaks waiting for payment ids
+        truth = []                                  # (payment, invoice) = the real answer
 
         for inv in invoices:
             cust = by_id[inv.customer_id]
@@ -136,11 +139,13 @@ def main():
                     shortfall = money(rng.choice([50, 107.5, 215]))   # looks like bank charges
                 pay = make_payment(rng, cust, inv, amount=inv.amount - shortfall)
                 payments.append(pay)
+                truth.append((pay, inv))
                 pending.append(("partial_payment", inv, [pay], f"Short by {shortfall}"))
                 continue
 
             pay = make_payment(rng, cust, inv)
             payments.append(pay)
+            truth.append((pay, inv))
 
             if inv.id in duplicate_ids:
                 dup = Payment(
@@ -151,10 +156,18 @@ def main():
                     bank_narration=pay.bank_narration,
                 )
                 payments.append(dup)
+                truth.append((dup, inv))
                 pending.append(("duplicate_payment", inv, [pay, dup], "Same payment received twice"))
 
         s.add_all(payments)
         s.flush()                                   # assigns payment ids
+
+        # Save the true payment -> invoice pairs so the matcher can be graded later.
+        with open("data_truth.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["payment_id", "invoice_id"])
+            for pay, inv in truth:
+                w.writerow([pay.id, inv.id])
 
         # The bank sees every payment, including the duplicates (real money moved).
         s.add_all([

@@ -1,0 +1,12 @@
+method                          matched  correct  accuracy
+amount_date                          37       37   100.00%
+fuzzy_exact_amount                    5        5   100.00%
+reference                           373      373   100.00%
+reference_no_customer                83       83   100.00%
+
+total payments:       498
+matched:              498
+left unmatched:       0
+matched correctly:    498
+accuracy when matched: 100.00%
+overall correct:       100.00%
