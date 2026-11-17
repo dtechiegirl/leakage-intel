@@ -16,9 +16,10 @@ OVERPAY_CEIL = Decimal("1.001")   # but not more than rounding above it
 EARLY_DAYS = 10                   # allowed to pay this many days before the due date
 LATE_DAYS = 120                   # and this many days after it
 DUP_WINDOW_DAYS = 7               # same amount within a week = likely a repeat payment
-EXACT_TOLERANCE = Decimal("0.01") # amounts within 1 kobo count as "exactly equal"
+EXACT_TOLERANCE = Decimal("0") # amounts within 1 kobo count as "exactly equal"
 NAME_MIN = 60                     # name must be at least this similar to be plausible
 TIE_GAP = 5                       # if top two names are this close, we can't decide
+INSTALLMENT_WINDOW_DAYS = 60      # two instalments must arrive within this many days
 
 
 def invoice_number(reference):
@@ -37,6 +38,7 @@ def name_similarity(p, customer_name):
         return 0
     return fuzz.WRatio(name, customer_name.upper())
 
+
 def amount_fits(p, inv):
     """Is the payment amount plausible for this invoice?"""
     return REF_FLOOR <= p.amount / inv.amount <= OVERPAY_CEIL
@@ -53,6 +55,7 @@ def exact_match_elsewhere(p, inv, invoices, by_customer, allocated):
                 and abs(p.amount - other.amount) <= EXACT_TOLERANCE):
             return True
     return False
+
 
 def find_by_amount(p, candidates, allocated):
     """Pass 2, customer KNOWN: use that customer's invoices + amount + dates."""
@@ -77,7 +80,7 @@ def find_by_amount(p, candidates, allocated):
             continue
         if p.paid_date < inv.issue_date:
             continue
-        # Lower score = better. Amount gap counts more than timing.
+        # Lower score = better. An exact amount always beats a near one;
         # after that, amount gap and timing decide.
         is_exact = abs(p.amount - inv.amount) <= EXACT_TOLERANCE
         score = (0 if is_exact else 1,
@@ -144,6 +147,43 @@ def find_global(p, invoices, allocated, cust_names):
     return pool[0][3], "fuzzy_amount_date", Decimal("0.60")
 
 
+def belongs_to(p, inv, cust_names):
+    """Could this payment be from the customer who owns this invoice?"""
+    if p.customer_id is not None:
+        return p.customer_id == inv.customer_id
+    return name_similarity(p, cust_names[inv.customer_id]) >= NAME_MIN
+
+
+def find_installments(leftover, invoices, allocated, cust_names):
+    """Pass 3: two leftover payments that add up EXACTLY to one unpaid invoice.
+
+    Returns a list of (payment_1, payment_2, invoice). If more than one pair
+    fits the same invoice, we do not guess: it stays for human review.
+    """
+    found, used = [], set()
+    for inv in invoices:
+        if inv.id in allocated:
+            continue
+        pairs = []
+        for i, p1 in enumerate(leftover):
+            for p2 in leftover[i + 1:]:
+                if p1.id in used or p2.id in used:
+                    continue
+                if abs((p1.amount + p2.amount) - inv.amount) > EXACT_TOLERANCE:
+                    continue                                   # must add up exactly
+                if min(p1.paid_date, p2.paid_date) < inv.issue_date:
+                    continue                                   # paid before invoice existed
+                if abs((p2.paid_date - p1.paid_date).days) > INSTALLMENT_WINDOW_DAYS:
+                    continue                                   # too far apart to be one plan
+                if belongs_to(p1, inv, cust_names) and belongs_to(p2, inv, cust_names):
+                    pairs.append((p1, p2))
+        if len(pairs) == 1:
+            p1, p2 = pairs[0]
+            used.update({p1.id, p2.id})
+            found.append((p1, p2, inv))
+    return found
+
+
 def run_matching():
     with SessionLocal() as s:
         s.execute(delete(PaymentAllocation))   # safe to re-run
@@ -162,10 +202,9 @@ def run_matching():
         allocated = {}      # invoice_id -> payments already matched to it
         results = []        # (payment, invoice, method, confidence)
         leftovers = []
-        unmatched = 0
+        still_unmatched = []    # payments neither Pass 1 nor Pass 2 could place
 
-        # Pass 1: the reference names an invoice, and the customer agrees.
-                # Pass 1: the reference names an invoice, the amount fits, and
+        # Pass 1: the reference names an invoice, the amount fits, and
         # no other invoice matches the amount better.
         for p in payments:
             n = invoice_number(p.reference)
@@ -191,10 +230,20 @@ def run_matching():
                 inv, method, conf = find_global(p, invoices, allocated, cust_names)
 
             if inv is None:
-                unmatched += 1
+                still_unmatched.append(p)
                 continue
             allocated.setdefault(inv.id, []).append(p)
             results.append((p, inv, method, conf))
+
+        # Pass 3: installments. Two leftover payments that add up exactly to one
+        # unpaid invoice are a payment plan, not two unexplained payments.
+        for p1, p2, inv in find_installments(still_unmatched, invoices, allocated, cust_names):
+            for p in (p1, p2):
+                allocated.setdefault(inv.id, []).append(p)
+                results.append((p, inv, "installment", Decimal("0.80")))
+
+        matched_ids = {p.id for p, _, _, _ in results}
+        unmatched = sum(1 for p in still_unmatched if p.id not in matched_ids)
 
         s.add_all([
             PaymentAllocation(payment_id=p.id, invoice_id=inv.id,

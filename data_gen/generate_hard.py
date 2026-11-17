@@ -10,7 +10,7 @@ import csv
 import random
 from collections import Counter
 from datetime import timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import func, select
 
@@ -23,6 +23,7 @@ from data_gen.generate import (AS_OF, BRANCHES, INDUSTRIES, N_CUSTOMERS,
 SEED = 99                      # different from dataset 1 (42 and 7)
 SHARE_NO_CUSTOMER = 0.25       # dataset 1 was 0.15
 N_COLLISIONS = 10              # pairs of invoices from different customers with the SAME amount
+N_INSTALLMENT = 8              # SWITCH: invoices paid in two parts (not a leak). 0 = off.
 
 # Only 8 surnames, so many customers look alike (e.g. "Okafor Foods" vs "Okafor Motors").
 HARD_SURNAMES = ["Okafor", "Bello", "Yusuf", "Chukwu", "Eze", "Musa", "Adeyemi", "Lawal"]
@@ -105,6 +106,8 @@ def main():
         unpaid = pool[:N_UNPAID]
         partial = pool[N_UNPAID:N_UNPAID + N_PARTIAL]
         duplicate = pool[N_UNPAID + N_PARTIAL:N_UNPAID + N_PARTIAL + N_DUPLICATE]
+        start = N_UNPAID + N_PARTIAL + N_DUPLICATE
+        installment = pool[start:start + N_INSTALLMENT]   # never overlaps a leak
         unpaid_ids = {i.id for i in unpaid}
         partial_ids = {i.id for i in partial}
         duplicate_ids = {i.id for i in duplicate}
@@ -154,6 +157,28 @@ def main():
                 pay.customer_id = None
                 blanked += 1
 
+        # TRAP: installments. Done last, with its own random stream, so turning it on
+        # changes ONLY these invoices and nothing else in the dataset.
+        # Each chosen invoice's normal payment is split into two smaller payments that
+        # add up exactly to the invoice. This is NOT a leak, so no PlantedLeak row.
+        if installment:
+            rng_inst = random.Random(SEED + 1)
+            first_payment = {inv.id: pay for pay, inv in truth}
+            for inv in installment:
+                pay1 = first_payment[inv.id]
+                share = Decimal(str(rng_inst.choice([0.4, 0.5, 0.6])))
+                first_amount = money(inv.amount * share)
+                pay2 = Payment(
+                    customer_id=pay1.customer_id,
+                    reference=pay1.reference,
+                    amount=inv.amount - first_amount,
+                    paid_date=min(pay1.paid_date + timedelta(days=rng_inst.randint(10, 30)), AS_OF),
+                    bank_narration=pay1.bank_narration,
+                )
+                pay1.amount = first_amount
+                payments.append(pay2)
+                truth.append((pay2, inv))
+
         s.add_all(payments)
         s.flush()
 
@@ -182,6 +207,7 @@ def main():
         print("invoices: ", s.scalar(select(func.count()).select_from(Invoice)))
         print("payments: ", s.scalar(select(func.count()).select_from(Payment)))
         print("payments with customer removed:", blanked)
+        print("invoices paid in installments:", len(installment))
         print("leaks:    ", dict(Counter(k for k, *_ in pending)))
 
 

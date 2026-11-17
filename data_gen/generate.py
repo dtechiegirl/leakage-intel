@@ -2,7 +2,7 @@ import csv
 import random
 from collections import Counter
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import delete, select, func
 
@@ -27,8 +27,8 @@ INDUSTRIES = ["Retail", "Logistics", "Healthcare", "Manufacturing"]
 
 
 def money(x) -> Decimal:
-    """Exact 2-decimal money. Going through str avoids float noise."""
-    return Decimal(str(x)).quantize(Decimal("0.01"))
+    """Whole naira, rounded half up."""
+    return Decimal(str(x)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
 
 def wipe(s):

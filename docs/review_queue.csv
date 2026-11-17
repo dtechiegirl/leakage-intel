@@ -1,3 +1,23 @@
 payment_id,narration,payment_amount,paid_date,candidate_invoice,customer,invoice_amount,paid_fraction,reason
-3578,TRF FROM ADEYEMI STORES / NO REF,43479.23,2026-02-25,INV-00094,Adeyemi Stores,49408.22,88.00%,outside auto-match limits: human review
-3657,TRF FROM EZE VENTURES / NO REF,756233.46,2026-03-21,INV-00172,Eze Ventures,859356.21,88.00%,outside auto-match limits: human review
+3991,TRF FROM CHUKWU STOES / INV-00008,199484.54,2025-12-17,INV-00008,Chukwu Stores,332474.24,60.00%,outside auto-match limits: human review
+4490,TRF FROM CHUKWU STOES / INV-00008,132989.70,2026-01-10,,,,,no plausible invoice
+4053,TRF FROM MUSA NT / 71,47974.41,2026-01-25,INV-00071,Musa Motors,95948.82,50.00%,outside auto-match limits: human review
+4484,TRF FROM MUSA NT / 71,47974.41,2026-02-09,INV-00071,Musa Motors,95948.82,50.00%,outside auto-match limits: human review
+4076,TRF FROM ADEYEMI STORES / NO REF,43479.23,2026-02-25,INV-00094,Adeyemi Stores,49408.22,88.00%,outside auto-match limits: human review
+4115,TRF FROM ADEYEMI ENETRPRISES / INV-00133,268371.88,2026-02-26,INV-00005,Adeyemi Enterprises,516995.44,51.91%,outside auto-match limits: human review
+4489,TRF FROM ADEYEMI ENETRPRISES / INV-00133,402557.83,2026-03-10,INV-00005,Adeyemi Enterprises,516995.44,77.86%,outside auto-match limits: human review
+4489,TRF FROM ADEYEMI ENETRPRISES / INV-00133,402557.83,2026-03-10,INV-00133,Adeyemi Enterprises,670929.71,60.00%,outside auto-match limits: human review
+4155,TRF FROM EZE VENTURES / NO REF,756233.46,2026-03-21,INV-00172,Eze Ventures,859356.21,88.00%,outside auto-match limits: human review
+4162,TRF FROM ADEYEMI MOTORS / NO REF,137096.60,2026-04-08,INV-00179,Adeyemi Motors,274193.20,50.00%,outside auto-match limits: human review
+4487,TRF FROM ADEYEMI MOTORS / NO REF,137096.60,2026-05-04,INV-00179,Adeyemi Motors,274193.20,50.00%,outside auto-match limits: human review
+4171,TRF FROM YUSUF STORES / NO REF,51991.80,2026-05-24,,,,,no plausible invoice
+4342,TRF FROM YSUUF PHARMACY / INV-00360,37321.51,2026-06-06,INV-00360,Yusuf Pharmacy,62202.52,60.00%,outside auto-match limits: human review
+4301,TRF FROM ADEYMEI FOODS / INV00319,342408.59,2026-06-08,INV-00021,Adeyemi Foods,507586.22,67.46%,outside auto-match limits: human review
+4301,TRF FROM ADEYMEI FOODS / INV00319,342408.59,2026-06-08,INV-00319,Adeyemi Foods,570680.98,60.00%,outside auto-match limits: human review
+4483,TRF FROM YUSUF STORES / NO REF,77987.71,2026-06-17,INV-00188,Yusuf Stores,129979.51,60.00%,outside auto-match limits: human review
+4486,TRF FROM YSUUF PHARMACY / INV-00360,24881.01,2026-06-27,,,,,no plausible invoice
+4485,TRF FROM ADEYMEI FOODS / INV00319,228272.39,2026-06-30,INV-00179,Adeyemi Motors,274193.20,83.25%,outside auto-match limits: human review
+4377,TRF FROM MUSA OTORS / INV00397,39207.78,2026-08-02,INV-00280,Musa Motors,68834.74,56.96%,outside auto-match limits: human review
+4488,TRF FROM MUSA OTORS / INV00397,58811.66,2026-08-29,INV-00280,Musa Motors,68834.74,85.44%,outside auto-match limits: human review
+4488,TRF FROM MUSA OTORS / INV00397,58811.66,2026-08-29,INV-00389,Musa Motors,86387.28,68.08%,outside auto-match limits: human review
+4488,TRF FROM MUSA OTORS / INV00397,58811.66,2026-08-29,INV-00071,Musa Motors,95948.82,61.29%,outside auto-match limits: human review

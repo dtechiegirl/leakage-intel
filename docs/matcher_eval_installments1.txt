@@ -1,0 +1,16 @@
+method                          matched  correct  accuracy
+amount_date                         100      100   100.00%
+duplicate_of_existing                 3        3   100.00%
+fuzzy_amount_date                     2        2   100.00%
+fuzzy_exact_amount                   45       45   100.00%
+reference                           264      264   100.00%
+reference_no_customer                74       74   100.00%
+
+total payments:       506
+matched:              488
+left unmatched:       18
+matched correctly:    488
+accuracy when matched: 100.00%
+overall correct:       96.44%
+
+UNMATCHED payment ids: [3991, 4053, 4076, 4115, 4155, 4162, 4171, 4301, 4342, 4377, 4483, 4484, 4485, 4486, 4487, 4488, 4489, 4490]

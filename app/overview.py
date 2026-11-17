@@ -21,7 +21,7 @@ SYSTEM = (
 
 
 def naira(x):
-    return f"₦{x:,.2f}"
+    return f"₦{x:,.0f}"
 
 
 def build_facts():
